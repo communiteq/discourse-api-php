@@ -16,58 +16,23 @@
 
 class DiscourseAPI
 {
-    private $_sessionKey = null;
     private $_protocol = 'http';
     private $_apiKey = null;
-    private $_userName = null;
     private $_dcHostname = null;
 
-    function __construct($dcHostname, $apiKey = null, $userName = null) 
+    function __construct($dcHostname, $apiKey = null)
     {
         $this->_dcHostname = $dcHostname;
         $this->_apiKey = $apiKey;
-        $this->_userName = $userName;
     }
 
-    private function _ensureSession($forceNew = false) 
-    {
-        if (($forceNew == false) && ($this->_sessionKey != null)) {
-            return true;
-        }
-
-        $url = sprintf(
-            '%s://%s?api_key=%s&api_username=%s', 
-            $this->_protocol, $this->_dcHostname, $this->_apiKey, $this->_userName
-        );
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLINFO_HEADER_OUT, true);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_VERBOSE, 1);
-        curl_setopt($ch, CURLOPT_HEADER, 1);
-        $out = curl_exec($ch);
-
-        $rc = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
-        $hs = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
-        $out = substr($out, 0, $hs);
-        preg_match('/^Set-Cookie:\s*([^;]*)/mi', $out, $m);
-        parse_str($m[1], $cookies);
-        $this->_sessionKey = $cookies['_forum_session'];
-
-        curl_close($ch);
-
-        return ($rc == 200);
-    }
-
-    private function _getRequest($reqString, $paramArray = null)
+    private function _getRequest($reqString, $paramArray = null, $apiUser = 'system')
     {
         if ($paramArray == null) {
             $paramArray = array();
         }
         $paramArray['api_key'] = $this->_apiKey;
-        $paramArray['api_username'] = $this->_userName;
+        $paramArray['api_username'] = $apiUser;
         $ch = curl_init();
         $url = sprintf(
             '%s://%s%s?%s',
@@ -76,22 +41,30 @@ class DiscourseAPI
             $reqString, 
             http_build_query($paramArray)
         );
+
         curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_COOKIE, '_forum_session='.$this->_sessionKey);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         $body = curl_exec($ch);
         $rc = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
-        return ($rc == 200) ? $body : false;
+        $resObj = new \stdClass();
+        $resObj->http_code = $rc;
+        $resObj->apiresult = json_decode($body);
+        return $resObj;
     }
 
-    private function _putRequest($reqString, $paramArray)
+    private function _putRequest($reqString, $paramArray, $apiUser = 'system')
     {
-        return $this->_postRequest($reqString, $paramArray, true);
+        return $this->_putpostRequest($reqString, $paramArray, $apiUser, true);
     }
 
-    private function _postRequest($reqString, $paramArray, $putMethod = false)
+    private function _postRequest($reqString, $paramArray, $apiUser = 'system')
+    {
+        return $this->_putpostRequest($reqString, $paramArray, $apiUser, false);
+    }
+
+    private function _putpostRequest($reqString, $paramArray, $apiUser = 'system', $putMethod = false)
     {
         $ch = curl_init();
         $url = sprintf(
@@ -100,39 +73,22 @@ class DiscourseAPI
             $this->_dcHostname, 
             $reqString, 
             $this->_apiKey, 
-            $this->_userName
+            $apiUser
         );
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($paramArray));
-        curl_setopt($ch, CURLOPT_COOKIE, '_forum_session='.$this->_sessionKey);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         if ($putMethod) {
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
         }
         $body = curl_exec($ch);
-
         $rc = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
-        return ($rc == 200) ? $body : false;
-    }
 
-    /**
-     * changeSiteSetting
-     *
-     * @param string $name  name of site setting to be modified
-     * @param string $value value of site setting to be modified
-     *
-     * @return mixed json or HTTP return code
-     */
-
-    function changeSiteSetting($name, $value)
-    {
-        $this->_ensureSession();
-        $rc = $this->_putRequest(
-            '/admin/site_settings/'.$name, 
-            array('value' => $value)
-        );
-        return $rc;
+        $resObj = new \stdClass();
+        $resObj->http_code = $rc;
+        $resObj->apiresult = json_decode($body);
+        return $resObj;
     }
 
     /**
@@ -143,60 +99,114 @@ class DiscourseAPI
      * @param string $emailAddress email address of new user
      * @param string $password     password of new user
      *
-     * @return mixed json or HTTP return code
+     * @return mixed HTTP return code and API return object
      */
 
     function createUser($name, $userName, $emailAddress, $password)
     {
-        $json = $this->_getRequest('/users/hp.json');
-        if ($json === false) {
+        $obj = $this->_getRequest('/users/hp.json');
+        if ($obj->http_code != 200) {
             return false;
         }
-
-        $obj = json_decode($json);
 
         $params = array(
             'name' => $name,
             'username' => $userName,
             'email' => $emailAddress,
             'password' => $password,
-            'challenge' => strrev($obj->challenge),
-            'password_confirmation' => $obj->value
+            'challenge' => strrev($obj->apiresult->challenge),
+            'password_confirmation' => $obj->apiresult->value
         );
 
         return $this->_postRequest('/users', $params);
     }
 
-    function createCategory($name, $color, $textColor = '000000')
+    /**
+     * activateUser
+     *
+     * @param integer $userId      id of user to activate
+     *
+     * @return mixed HTTP return code 
+     */
+
+    function activateUser($userId)
+    {
+        return $this->_putRequest("/admin/users/{$userId}/activate", array());
+    }
+
+    /**
+     * getUserByUsername
+     *
+     * @param string $userName     username of user
+     *
+     * @return mixed HTTP return code and API return object
+     */
+
+    function getUserByUsername($userName)
+    {
+        return $this->_getRequest("/users/{$userName}.json");
+    }
+
+    /**
+     * createCategory
+     *
+     * @param string $categoryName name of new category
+     * @param string $color        color code of new category (six hex chars, no #)
+     * @param string $textColor    optional color code of text for new category
+     * @param string $userName     optional user to create category as
+     *
+     * @return mixed HTTP return code and API return object
+     */
+
+    function createCategory($categoryName, $color, $textColor = '000000', $userName = 'system')
     {
         $params = array(
-            'name' => $name,
+            'name' => $categoryName,
             'color' => $color,
             'text_color' => $textColor
         );
-        return $this->_postRequest('/categories', $params);
+        return $this->_postRequest('/categories', $params, $userName);
     }
 
-    function createTopic($title, $bodyText, $category, $replyTo = 0) 
+    /**
+     * createTopic
+     *
+     * @param string $topicTitle   title of topic
+     * @param string $bodyText     body text of topic post
+     * @param string $categoryName category to create topic in
+     * @param string $userName     user to create topic as
+     * @param string $replyToId    post id to reply as
+     *
+     * @return mixed HTTP return code and API return object
+     */
+
+    function createTopic($topicTitle, $bodyText, $categoryId, $userName, $replyToId = 0) 
     {
         $params = array(
-            'title' => $title,
+            'title' => $topicTitle,
             'raw' => $bodyText,
-            'category' => $category,
+            'category' => $categoryId,
             'archetype' => 'regular',
-            'reply_to_post_number' => $replyTo,
+            'reply_to_post_number' => $replyToId,
         );
-        return $this->_postRequest('/posts', $params);
+        return $this->_postRequest('/posts', $params, $userName);
     }
 
-    function createPost($bodyText, $topicId)
+    /**
+     * createPost
+     *
+     * NOT WORKING YET
+     */
+
+    function createPost($bodyText, $topicId, $categoryId, $userName)
     {
         $params = array(
             'raw' => $bodyText,
             'archetype' => 'regular',
+            'category' => $categoryId,
             'topic_id' => $topicId
         );
-        return $this->_postRequest('/posts', $params);
+        return $this->_postRequest('/posts', $params, $userName);
     }
 
 }
