@@ -92,6 +92,67 @@ class DiscourseAPI
     }
 
     /**
+     * group
+     *
+     * @param string $groupname         name of group
+     * @param string $usernames     users to add to group
+     *
+     * @return mixed HTTP return code and API return object
+     */
+
+    function group($groupname, $usernames = array())
+    {
+        $obj = $this->_getRequest("/admin/groups.json");
+        if ($obj->http_code != 200) {
+            return false;
+        }
+
+        foreach($obj->apiresult as $group) {
+            if($group->name === $groupname) {
+                $groupId = $group->id;
+                break;
+            }
+            $groupId = false;
+        }
+
+        $params = array(
+            'group' => array(
+                'name' => $groupname,
+                'usernames' => implode(',', $usernames)
+            )
+        );
+
+        if($groupId) {
+            return $this->_putRequest('/admin/groups/' . $groupId, $params);
+        } else {
+            return $this->_postRequest('/admin/groups', $params);
+        }
+    }
+
+    /**
+     * getGroups
+     *
+     * @return mixed HTTP return code and API return object
+     */
+
+    function getGroups()
+    {
+        return $this->_getRequest("/admin/groups.json");
+    }
+
+    /**
+     * getGroupMembers
+     *
+     * @param string $group         name of group
+     * @return mixed HTTP return code and API return object
+     */
+
+    function getGroupMembers($group)
+    {
+        return $this->_getRequest("/groups/{$group}/members.json");
+    }
+
+    /**
      * createUser
      *
      * @param string $name         name of new user
