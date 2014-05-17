@@ -205,7 +205,7 @@ class DiscourseAPI
 
     function getUsernameByEmail($email)
     {
-        $users = $this->_getRequest("/admin/users/list/active.json");
+        $users = $this->_getRequest("/admin/users/list/active.json?filter=".urlencode($email));
         foreach($users->apiresult as $user) {
             if($user->email === $email) {
                 return $user->username;
