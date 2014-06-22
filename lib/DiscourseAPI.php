@@ -290,5 +290,14 @@ class DiscourseAPI
         return $this->_postRequest('/posts', $params, $userName);
     }
 
+    function inviteUser($email, $topicId, $userName = 'system')
+    {
+        $params = array(
+            'email' => $email,
+            'topic_id' => $topicId
+        );
+        return $this->_postRequest('/t/'.intval($topicId).'/invite.json', $params, $userName);
+    }
+
 }
 
