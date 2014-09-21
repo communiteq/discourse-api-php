@@ -22,9 +22,11 @@ class DiscourseAPI
 
     function __construct($dcHostname, $apiKey = null, $protocol='http')
     {
+
         $this->_dcHostname = $dcHostname;
 	$this->_apiKey = $apiKey;
 	$this->_protocol=$protocol;
+
     }
 
     private function _getRequest($reqString, $paramArray = null, $apiUser = 'system')
