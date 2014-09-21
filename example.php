@@ -2,7 +2,7 @@
 
 require_once "lib/DiscourseAPI.php";
 
-$api = new DiscourseAPI("apitest.discoursehosting.net", "....");
+$api = new DiscourseAPI("apitest.discoursehosting.net", API_KEY, API_HOST_PROTOCOL);
 
 // create user
 $r = $api->createUser('John Doe', 'johndoe', 'johndoe@discoursehosting.com', 'foobar!!');
