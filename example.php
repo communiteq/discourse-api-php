@@ -40,4 +40,10 @@ $r = $api->createPost(
     'johndoe'
 );
     
+// change sitesetting
+// use 'true' and 'false' between quotes
+
+$r = $api->changeSiteSetting('invite_expiry_days', 29);
+print_r($r);
+
 

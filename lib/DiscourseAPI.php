@@ -22,9 +22,9 @@ class DiscourseAPI
 
     function __construct($dcHostname, $apiKey = null, $protocol='http')
     {
-	$this->_dcHostname = $dcHostname;
-	$this->_apiKey = $apiKey;
-	$this->_protocol=$protocol;
+        $this->_dcHostname = $dcHostname;
+        $this->_apiKey = $apiKey;
+        $this->_protocol=$protocol;
     }
 
     private function _getRequest($reqString, $paramArray = null, $apiUser = 'system')
@@ -300,5 +300,10 @@ class DiscourseAPI
         return $this->_postRequest('/t/'.intval($topicId).'/invite.json', $params, $userName);
     }
 
+    function changeSiteSetting($siteSetting, $value)
+    {
+        $params = array($siteSetting => $value);
+        return $this->_putRequest('/admin/site_settings/' . $siteSetting, $params);
+    }
 }
 
