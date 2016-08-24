@@ -307,5 +307,22 @@ class DiscourseAPI
         $params = array($siteSetting => $value);
         return $this->_putRequest('/admin/site_settings/' . $siteSetting, $params);
     }
+    
+    function getIDByEmail($email)
+    {
+        $username = $this->getUsernameByEmail($email);
+        if ($username) {
+            return $this->_getRequest('/users/' . $username . '/activity.json')->apiresult->user->id;
+        } else {
+            return false;
+        }
+    }
+
+    function logoutByEmail($email)
+    {
+        $user_id = $this->getIDByEmail($email);
+        $params  = array('username_or_email' => $email);
+        return $this->_postRequest('/admin/users/' . $user_id . '/log_out', $params);
+    }
 }
 
