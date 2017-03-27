@@ -19,12 +19,16 @@ class DiscourseAPI
     private $_protocol = 'http';
     private $_apiKey = null;
     private $_dcHostname = null;
+    private $_httpAuthName = '';
+    private $_httpAuthPass = '';
 
-    function __construct($dcHostname, $apiKey = null, $protocol='http')
+    function __construct($dcHostname, $apiKey = null, $protocol='http', $httpAuthName='', $httpAuthPass='')
     {
         $this->_dcHostname = $dcHostname;
         $this->_apiKey = $apiKey;
         $this->_protocol=$protocol;
+        $this->_httpAuthName = $httpAuthName;
+        $this->_httpAuthPass = $httpAuthPass;
     }
 
     private function _getRequest($reqString, $paramArray = null, $apiUser = 'system')
@@ -42,6 +46,11 @@ class DiscourseAPI
             $reqString, 
             http_build_query($paramArray)
         );
+	    
+	if (!empty($this->_httpAuthName) && !empty($this->_httpAuthPass)) {
+            curl_setopt($ch, CURLOPT_USERPWD, $this->_httpAuthName . ":" . $this->_httpAuthPass);
+            curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        }
 
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
@@ -82,6 +91,12 @@ class DiscourseAPI
         if ($putMethod) {
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
         }
+	    
+	if (!empty($this->_httpAuthName) && !empty($this->_httpAuthPass)) {
+            curl_setopt($ch, CURLOPT_USERPWD, $this->_httpAuthName . ":" . $this->_httpAuthPass);
+            curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        }
+
         $body = curl_exec($ch);
         $rc = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
@@ -196,6 +211,19 @@ class DiscourseAPI
         return $this->_putRequest("/admin/users/{$userId}/activate", array());
     }
 
+   /**
+    * suspendUser
+    *
+    * @param integer $userId      id of user to suspend
+    *
+    * @return mixed HTTP return code
+    */
+
+    function suspendUser($userId)
+    {
+        return $this->_putRequest("/admin/users/{$userId}/suspend", array());
+    }
+	
     /**
      * getUsernameByEmail
      *
@@ -287,6 +315,22 @@ class DiscourseAPI
         );
         return $this->_postRequest('/posts', $params, $userName);
     }
+	
+    /**
+     * watchTopic
+     *
+     * watch Topic. If username is given, API-Key must be
+     * general API key. Otherwise it will fail.
+     * If no username is given, topic will be watched with
+     * the system API username
+     */
+     function watchTopic($topicId, $userName = 'system')
+     {
+        $params = array(
+           'notification_level' => '3'
+        );
+        return $this->_postRequest("/t/{$topicId}/notifications.json", $params, $userName);
+     }
 
     /**
      * createPost
@@ -335,6 +379,11 @@ class DiscourseAPI
         $user_id = $this->getIDByEmail($email);
         $params  = array('username_or_email' => $email);
         return $this->_postRequest('/admin/users/' . $user_id . '/log_out', $params);
+    }
+	
+    function getUserinfoByName($username) 
+    {
+        return $this->_getRequest("/users/{$username}.json");
     }
 }
 
