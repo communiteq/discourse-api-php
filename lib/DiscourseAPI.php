@@ -193,8 +193,8 @@ class DiscourseAPI
 
     function createGroup($name)
     {
-        $obj = $this->_getRequest('/admin/groups/' . $name . '.json');
-        if ($obj->http_code != 200) {
+        $obj = $this->_getRequest('/groups/' . $name . '.json');
+        if ($obj->http_code == 200) {
             return false;
         }
 
