@@ -146,6 +146,30 @@ class DiscourseAPI
     }
 
     /**
+     * createGroup
+     *
+     * @param string $name         name of new group
+     *
+     * @return mixed HTTP return code and API return object
+     */
+
+    function createGroup($name)
+    {
+        $obj = $this->_getRequest('/admin/groups/' . $name . '.json');
+        if ($obj->http_code != 200) {
+            return false;
+        }
+
+        $params = array(
+            'group' => array(
+                'name' => $name,
+            )
+        );
+
+        return $this->_postRequest('/admin/groups', $params);
+    }
+
+    /**
      * getGroups
      *
      * @return mixed HTTP return code and API return object
