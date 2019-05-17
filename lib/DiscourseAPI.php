@@ -208,6 +208,24 @@ class DiscourseAPI
     }
 
     /**
+     * deleteGroup
+     *
+     * @param string $name         name of group to delete
+     *
+     * @return mixed HTTP return code and API return object
+     */
+
+    function deleteGroup($name)
+    {
+        $obj = $this->_getRequest('/groups/' . $name . '.json');
+        if ($obj->http_code != 200) {
+            return false;
+        }
+
+        return $this->_deleteRequest('/admin/groups/' . $obj->apiresult->group->id . '.json');
+    }
+
+    /**
      * getGroups
      *
      * @return mixed HTTP return code and API return object
