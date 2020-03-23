@@ -36,8 +36,6 @@ class DiscourseAPI
         if ($paramArray == null) {
             $paramArray = array();
         }
-        $paramArray['api_key'] = $this->_apiKey;
-        $paramArray['api_username'] = $apiUser;
         $ch = curl_init();
         $url = sprintf(
             '%s://%s%s?%s',
@@ -46,7 +44,12 @@ class DiscourseAPI
             $reqString, 
             http_build_query($paramArray)
         );
-	    
+
+    	curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "Api-Key: " . $this->_apiKey,
+            "Api-Username: $apiUser"
+        ]);
+    
 	if (!empty($this->_httpAuthName) && !empty($this->_httpAuthPass)) {
             curl_setopt($ch, CURLOPT_USERPWD, $this->_httpAuthName . ":" . $this->_httpAuthPass);
             curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
