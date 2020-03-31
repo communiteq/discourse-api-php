@@ -285,12 +285,13 @@ class DiscourseAPI
      * @return mixed HTTP return code and API return object
      */
 
-    function createCategory($categoryName, $color, $textColor = '000000', $userName = 'system')
+    function createCategory($categoryName, $color, $textColor = '000000', $userName = 'system', $permissions = array())
     {
         $params = array(
             'name' => $categoryName,
             'color' => $color,
-            'text_color' => $textColor
+            'text_color' => $textColor,
+            'permissions' => $permissions
         );
         return $this->_postRequest('/categories', $params, $userName);
     }
