@@ -45,6 +45,7 @@ class DiscourseAPI
             http_build_query($paramArray)
         );
 
+        // TODO: move post requests to this auth also
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             "Api-Key: " . $this->_apiKey,
             "Api-Username: $apiUser"
@@ -90,7 +91,6 @@ class DiscourseAPI
             $this->_apiKey,
             $apiUser
         );
-
 
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($paramArray));
@@ -301,6 +301,18 @@ class DiscourseAPI
     }
 
     /**
+     * getTopic
+     *
+     * @param string $topicId   id of topic
+     *
+     * @return mixed HTTP return code and API return object
+     */
+    function getTopic($topicID)
+    {
+        return $this->_getRequest('/t/' . $topicID . '.json');
+    }
+
+    /**
      * createTopic
      *
      * @param string $topicTitle   title of topic
@@ -311,7 +323,6 @@ class DiscourseAPI
      *
      * @return mixed HTTP return code and API return object
      */
-
     function createTopic($topicTitle, $bodyText, $categoryId, $userName, $replyToId = 0)
     {
         $params = array(
@@ -349,7 +360,6 @@ class DiscourseAPI
      *
      * @return mixed HTTP return code and API return object
      */
-
     function createPost($bodyText, $topicId, $userName)
     {
         $params = array(
