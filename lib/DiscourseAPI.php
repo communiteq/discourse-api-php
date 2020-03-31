@@ -1,18 +1,18 @@
 <?php
 
 /**
-  * Discourse API client for PHP
-  *
-  * This is the Discourse API client for PHP
-  * This is a very experimental API implementation.
-  *
-  * @category  DiscourseAPI
-  * @package   DiscourseAPI
-  * @author    Original author DiscourseHosting <richard@discoursehosting.com>
-  * @copyright 2013, DiscourseHosting.com
-  * @license   http://www.gnu.org/licenses/gpl-2.0.html GPLv2 
-  * @link      https://github.com/discoursehosting/discourse-api-php
-  */
+ * Discourse API client for PHP
+ *
+ * This is the Discourse API client for PHP
+ * This is a very experimental API implementation.
+ *
+ * @category  DiscourseAPI
+ * @package   DiscourseAPI
+ * @author    Original author DiscourseHosting <richard@discoursehosting.com>
+ * @copyright 2013, DiscourseHosting.com
+ * @license   http://www.gnu.org/licenses/gpl-2.0.html GPLv2 
+ * @link      https://github.com/discoursehosting/discourse-api-php
+ */
 
 class DiscourseAPI
 {
@@ -22,11 +22,11 @@ class DiscourseAPI
     private $_httpAuthName = '';
     private $_httpAuthPass = '';
 
-    function __construct($dcHostname, $apiKey = null, $protocol='http', $httpAuthName='', $httpAuthPass='')
+    function __construct($dcHostname, $apiKey = null, $protocol = 'http', $httpAuthName = '', $httpAuthPass = '')
     {
         $this->_dcHostname = $dcHostname;
         $this->_apiKey = $apiKey;
-        $this->_protocol=$protocol;
+        $this->_protocol = $protocol;
         $this->_httpAuthName = $httpAuthName;
         $this->_httpAuthPass = $httpAuthPass;
     }
@@ -39,18 +39,18 @@ class DiscourseAPI
         $ch = curl_init();
         $url = sprintf(
             '%s://%s%s?%s',
-            $this->_protocol, 
-            $this->_dcHostname, 
-            $reqString, 
+            $this->_protocol,
+            $this->_dcHostname,
+            $reqString,
             http_build_query($paramArray)
         );
 
-    	curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
             "Api-Key: " . $this->_apiKey,
             "Api-Username: $apiUser"
         ]);
-    
-	if (!empty($this->_httpAuthName) && !empty($this->_httpAuthPass)) {
+
+        if (!empty($this->_httpAuthName) && !empty($this->_httpAuthPass)) {
             curl_setopt($ch, CURLOPT_USERPWD, $this->_httpAuthName . ":" . $this->_httpAuthPass);
             curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
         }
@@ -74,28 +74,32 @@ class DiscourseAPI
 
     private function _postRequest($reqString, $paramArray, $apiUser = 'system')
     {
+
         return $this->_putpostRequest($reqString, $paramArray, $apiUser, false);
     }
 
     private function _putpostRequest($reqString, $paramArray, $apiUser = 'system', $putMethod = false)
     {
+
         $ch = curl_init();
         $url = sprintf(
             '%s://%s%s?api_key=%s&api_username=%s',
-            $this->_protocol, 
-            $this->_dcHostname, 
-            $reqString, 
-            $this->_apiKey, 
+            $this->_protocol,
+            $this->_dcHostname,
+            $reqString,
+            $this->_apiKey,
             $apiUser
         );
+
+
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($paramArray));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         if ($putMethod) {
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
         }
-	    
-	if (!empty($this->_httpAuthName) && !empty($this->_httpAuthPass)) {
+
+        if (!empty($this->_httpAuthName) && !empty($this->_httpAuthPass)) {
             curl_setopt($ch, CURLOPT_USERPWD, $this->_httpAuthName . ":" . $this->_httpAuthPass);
             curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
         }
@@ -126,8 +130,8 @@ class DiscourseAPI
             return false;
         }
 
-        foreach($obj->apiresult as $group) {
-            if($group->name === $groupname) {
+        foreach ($obj->apiresult as $group) {
+            if ($group->name === $groupname) {
                 $groupId = $group->id;
                 break;
             }
@@ -141,7 +145,7 @@ class DiscourseAPI
             )
         );
 
-        if($groupId) {
+        if ($groupId) {
             return $this->_putRequest('/admin/groups/' . $groupId, $params);
         } else {
             return $this->_postRequest('/admin/groups', $params);
@@ -214,19 +218,19 @@ class DiscourseAPI
         return $this->_putRequest("/admin/users/{$userId}/activate", array());
     }
 
-   /**
-    * suspendUser
-    *
-    * @param integer $userId      id of user to suspend
-    *
-    * @return mixed HTTP return code
-    */
+    /**
+     * suspendUser
+     *
+     * @param integer $userId      id of user to suspend
+     *
+     * @return mixed HTTP return code
+     */
 
     function suspendUser($userId)
     {
         return $this->_putRequest("/admin/users/{$userId}/suspend", array());
     }
-	
+
     /**
      * getUsernameByEmail
      *
@@ -237,19 +241,20 @@ class DiscourseAPI
 
     function getUsernameByEmail($email)
     {
-        $users = $this->_getRequest('/admin/users/list/active.json', 
-            [ 'filter' => $email, 'show_emails' => 'true' ] 
+        $users = $this->_getRequest(
+            '/admin/users/list/active.json',
+            ['filter' => $email, 'show_emails' => 'true']
         );
-        foreach($users->apiresult as $user) {
-            if($user->email === $email) {
+        foreach ($users->apiresult as $user) {
+            if ($user->email === $email) {
                 return $user->username;
             }
         }
-	
+
         return false;
     }
 
-     /**
+    /**
      * getUserByUsername
      *
      * @param string $userName     username of user
@@ -261,18 +266,18 @@ class DiscourseAPI
     {
         return $this->_getRequest("/users/{$userName}.json");
     }
-	
+
     /**
-	 * getUserByExternalID
-	 *
-	 * @param string $externalID     external id of sso user
-	 *
-	 * @return mixed HTTP return code and API return object
-	 */
-	function getUserByExternalID($externalID)
-	{
-		return $this->_getRequest("/users/by-external/{$externalID}.json");
-	}
+     * getUserByExternalID
+     *
+     * @param string $externalID     external id of sso user
+     *
+     * @return mixed HTTP return code and API return object
+     */
+    function getUserByExternalID($externalID)
+    {
+        return $this->_getRequest("/users/by-external/{$externalID}.json");
+    }
 
     /**
      * createCategory
@@ -307,7 +312,7 @@ class DiscourseAPI
      * @return mixed HTTP return code and API return object
      */
 
-    function createTopic($topicTitle, $bodyText, $categoryId, $userName, $replyToId = 0) 
+    function createTopic($topicTitle, $bodyText, $categoryId, $userName, $replyToId = 0)
     {
         $params = array(
             'title' => $topicTitle,
@@ -318,7 +323,7 @@ class DiscourseAPI
         );
         return $this->_postRequest('/posts', $params, $userName);
     }
-	
+
     /**
      * watchTopic
      *
@@ -327,26 +332,28 @@ class DiscourseAPI
      * If no username is given, topic will be watched with
      * the system API username
      */
-     function watchTopic($topicId, $userName = 'system')
-     {
+    function watchTopic($topicId, $userName = 'system')
+    {
         $params = array(
-           'notification_level' => '3'
+            'notification_level' => '3'
         );
         return $this->_postRequest("/t/{$topicId}/notifications.json", $params, $userName);
-     }
+    }
 
     /**
      * createPost
      *
-     * NOT WORKING YET
+     * @param string $bodyText     body text of topic post
+     * @param string $topicId      topic id - must me a string not array
+     * @param string $userName     user to create topic as
+     *
+     * @return mixed HTTP return code and API return object
      */
 
-    function createPost($bodyText, $topicId, $categoryId, $userName)
+    function createPost($bodyText, $topicId, $userName)
     {
         $params = array(
             'raw' => $bodyText,
-            'archetype' => 'regular',
-            'category' => $categoryId,
             'topic_id' => $topicId
         );
         return $this->_postRequest('/posts', $params, $userName);
@@ -358,7 +365,7 @@ class DiscourseAPI
             'email' => $email,
             'topic_id' => $topicId
         );
-        return $this->_postRequest('/t/'.intval($topicId).'/invite.json', $params, $userName);
+        return $this->_postRequest('/t/' . intval($topicId) . '/invite.json', $params, $userName);
     }
 
     function changeSiteSetting($siteSetting, $value)
@@ -366,7 +373,7 @@ class DiscourseAPI
         $params = array($siteSetting => $value);
         return $this->_putRequest('/admin/site_settings/' . $siteSetting, $params);
     }
-    
+
     function getIDByEmail($email)
     {
         $username = $this->getUsernameByEmail($email);
@@ -383,10 +390,9 @@ class DiscourseAPI
         $params  = array('username_or_email' => $email);
         return $this->_postRequest('/admin/users/' . $user_id . '/log_out', $params);
     }
-	
-    function getUserinfoByName($username) 
+
+    function getUserinfoByName($username)
     {
         return $this->_getRequest("/users/{$username}.json");
     }
 }
-
