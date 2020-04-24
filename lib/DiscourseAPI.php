@@ -45,7 +45,6 @@ class DiscourseAPI
             http_build_query($paramArray)
         );
 
-        // TODO: move post requests to this auth also
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             "Api-Key: " . $this->_apiKey,
             "Api-Username: $apiUser"
@@ -84,13 +83,16 @@ class DiscourseAPI
 
         $ch = curl_init();
         $url = sprintf(
-            '%s://%s%s?api_key=%s&api_username=%s',
+            '%s://%s%s',
             $this->_protocol,
             $this->_dcHostname,
-            $reqString,
-            $this->_apiKey,
-            $apiUser
+            $reqString
         );
+
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "Api-Key: " . $this->_apiKey,
+            "Api-Username: $apiUser"
+        ]);
 
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($paramArray));
