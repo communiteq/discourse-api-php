@@ -31,6 +31,44 @@ class DiscourseAPI
         $this->_httpAuthPass = $httpAuthPass;
     }
 
+    private function _deleteRequest($reqString, $paramArray = null, $apiUser = 'system')
+    {
+        return $this->_deletepostRequest($reqString, $paramArray, $apiUser, true);
+    }
+
+    private function _deletepostRequest($reqString, $paramArray = null, $apiUser = 'system', $putMethod = false)
+    {
+        $ch = curl_init();
+        $url = sprintf(
+            '%s://%s%s?api_key=%s&api_username=%s',
+            $this->_protocol, 
+            $this->_dcHostname, 
+            $reqString, 
+            $this->_apiKey, 
+            $apiUser
+        );
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($paramArray));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        if ($putMethod) {
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
+        }
+        
+    if (!empty($this->_httpAuthName) && !empty($this->_httpAuthPass)) {
+            curl_setopt($ch, CURLOPT_USERPWD, $this->_httpAuthName . ":" . $this->_httpAuthPass);
+            curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        }
+
+        $body = curl_exec($ch);
+        $rc = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        $resObj = new \stdClass();
+        $resObj->http_code = $rc;
+        $resObj->apiresult = json_decode($body);
+        return $resObj;
+    }
+
     private function _getRequest($reqString, $paramArray = null, $apiUser = 'system')
     {
         if ($paramArray == null) {
@@ -150,6 +188,48 @@ class DiscourseAPI
         } else {
             return $this->_postRequest('/admin/groups', $params);
         }
+    }
+
+    /**
+     * createGroup
+     *
+     * @param string $name         name of new group
+     *
+     * @return mixed HTTP return code and API return object
+     */
+
+    function createGroup($name)
+    {
+        $obj = $this->_getRequest('/groups/' . $name . '.json');
+        if ($obj->http_code == 200) {
+            return false;
+        }
+
+        $params = array(
+            'group' => array(
+                'name' => $name,
+            )
+        );
+
+        return $this->_postRequest('/admin/groups', $params);
+    }
+
+    /**
+     * deleteGroup
+     *
+     * @param string $name         name of group to delete
+     *
+     * @return mixed HTTP return code and API return object
+     */
+
+    function deleteGroup($name)
+    {
+        $obj = $this->_getRequest('/groups/' . $name . '.json');
+        if ($obj->http_code != 200) {
+            return false;
+        }
+
+        return $this->_deleteRequest('/admin/groups/' . $obj->apiresult->group->id . '.json');
     }
 
     /**
